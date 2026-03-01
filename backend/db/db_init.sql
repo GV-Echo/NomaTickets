@@ -1,38 +1,25 @@
 -- ==========================================
--- Создание базы данных
--- ==========================================
-CREATE DATABASE "NomaTickets"
-    WITH 
-    OWNER = postgres
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'ru_RU.UTF-8'
-    LC_CTYPE = 'ru_RU.UTF-8'
-    TEMPLATE = template0;
-
-\c "NomaTickets";
-
--- ==========================================
 -- Таблица: Пользователь
 -- ==========================================
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role INTEGER NOT NULL DEFAULT 0,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
 -- Таблица: Мероприятие
 -- ==========================================
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     photo TEXT,
     duration INTEGER NOT NULL CHECK (duration > 0),
-    available BOOLEAN NOT NULL DEFAULT TRUE,
+    is_available BOOLEAN NOT NULL DEFAULT TRUE,
     deleted_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -40,7 +27,7 @@ CREATE TABLE events (
 -- ==========================================
 -- Таблица: Билет
 -- ==========================================
-CREATE TABLE tickets (
+CREATE TABLE IF NOT EXISTS tickets (
     id SERIAL PRIMARY KEY,
     event_id INTEGER NOT NULL,
     event_date DATE NOT NULL,
@@ -58,11 +45,11 @@ CREATE TABLE tickets (
 -- ==========================================
 -- Таблица: Бронь
 -- ==========================================
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
     id SERIAL PRIMARY KEY,
     ticket_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    used BOOLEAN NOT NULL DEFAULT FALSE,
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,
     cancelled_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -88,7 +75,7 @@ CREATE INDEX idx_tickets_event_id ON tickets(event_id);
 CREATE INDEX idx_bookings_user_id ON bookings(user_id);
 
 -- Фильтрация активных мероприятий
-CREATE INDEX idx_events_available ON events(available)
+CREATE INDEX idx_events_available ON events(is_available)
 WHERE deleted_at IS NULL;
 
 -- ==========================================
@@ -102,7 +89,7 @@ DECLARE
     v_available BOOLEAN;
     v_deleted TIMESTAMP;
 BEGIN
-    SELECT e.available, e.deleted_at
+    SELECT e.is_available, e.deleted_at
     INTO v_available, v_deleted
     FROM events e
     JOIN tickets t ON t.event_id = e.id
@@ -172,7 +159,7 @@ EXECUTE FUNCTION restore_ticket_quantity();
 CREATE OR REPLACE FUNCTION auto_set_cancelled_at()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.cancelled_at IS NULL AND OLD.cancelled_at IS NULL AND NEW.used = FALSE THEN
+    IF NEW.cancelled_at IS NULL AND OLD.cancelled_at IS NULL AND NEW.is_used = FALSE THEN
         RETURN NEW;
     END IF;
 
@@ -189,7 +176,3 @@ BEFORE UPDATE ON bookings
 FOR EACH ROW
 WHEN (OLD.cancelled_at IS NULL AND NEW.cancelled_at IS NOT NULL)
 EXECUTE FUNCTION auto_set_cancelled_at();
-
--- ==========================================
--- Конец файла
--- ==========================================
