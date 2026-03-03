@@ -1,8 +1,8 @@
 export interface Booking {
   id: number
-  ticketId: number
-  userId: number
-  isUsed: boolean
-  cancelledAt: string | null
-  createdAt: string
+  ticket_id: number
+  user_id: number
+  is_used: boolean
+  cancelled_at: Date | null
+  created_at: Date
 }

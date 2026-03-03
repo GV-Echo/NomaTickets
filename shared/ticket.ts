@@ -1,9 +1,9 @@
 export interface Ticket {
   id: number
-  eventId: number
-  eventDate: string
-  eventTime: string
+  event_id: number
+  event_date: Date
+  event_time: string
   price: number
   quantity: number
-  createdAt: string
+  created_at: Date
 }

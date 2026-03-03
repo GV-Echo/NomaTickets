@@ -4,7 +4,7 @@ export interface Event {
   description: string | null
   photo: string | null
   duration: number
-  isAvailable: boolean
-  deletedAt: string | null
-  createdAt: string
+  is_available: boolean
+  deleted_at: Date | null
+  created_at: Date
 }
