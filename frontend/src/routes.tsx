@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { AuthPage } from "./pages/Auth/Auth"
-import { HomePage } from "./pages/home/home_page"
+import { HomePage } from "./pages/Home/HomePage.tsx"
 // import { useAuth } from "../hooks/useAuth"
 
 export const AppRoutes = () => {

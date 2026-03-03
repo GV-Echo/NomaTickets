@@ -1,9 +1,9 @@
-export interface LoginForm {
+export interface LoginFormState {
     email: string
     password: string
 }
 
-export interface RegisterForm {
+export interface RegisterFormState {
     name: string
     email: string
     password: string
