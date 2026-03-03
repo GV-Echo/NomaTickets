@@ -5,14 +5,17 @@ import {AuthError} from "../../components/auth/AuthError.tsx"
 import {LoginForm} from "../../components/auth/LoginForm.tsx"
 import {RegisterForm} from "../../components/auth/RegisterForm.tsx"
 import type {LoginFormState, RegisterFormState} from "../../types/auth.types"
+import {useAuth} from "../../hooks/useAuth.tsx"
 
 type Mode = "login" | "register"
 
 
 export const AuthPage = () => {
     const [mode, setMode] = useState<Mode>("login")
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const {login, register, loading, error: authError, clearError} = useAuth()
+    const [localError, setLocalError] = useState<string | null>(null)
+
+    const error = localError ?? authError
 
     const [loginForm, setLoginForm] = useState<LoginFormState>({
         email: "",
@@ -28,30 +31,28 @@ export const AuthPage = () => {
 
     const handleLoginSubmit = async (e: FormEvent) => {
         e.preventDefault()
-        setError(null)
-        setLoading(true)
-        // TODO: Добавить обработку авторизации
+        setLocalError(null)
+        await login({email: loginForm.email, password: loginForm.password})
     }
 
     const handleRegisterSubmit = async (e: FormEvent) => {
         e.preventDefault()
-        setError(null)
+        setLocalError(null)
         if (registerForm.password !== registerForm.confirmPassword) {
-            setError("Пароли не совпадают")
+            setLocalError("Пароли не совпадают")
             return
         }
         if (registerForm.password.length < 6) {
-            setError("Пароль должен содержать минимум 6 символов")
+            setLocalError("Пароль должен содержать минимум 6 символов")
             return
         }
-
-        setLoading(true)
-        // TODO: Добавить обработку регистрации
+        await register({name: registerForm.name, email: registerForm.email, password: registerForm.password})
     }
 
     const switchMode = (newMode: Mode) => {
         setMode(newMode)
-        setError(null)
+        setLocalError(null)
+        clearError()
     }
 
     return (

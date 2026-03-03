@@ -1,5 +1,6 @@
 import {Input} from "../ui/Input"
 import {Button} from "../ui/Button"
+import {useAuth} from "../../hooks/useAuth.tsx";
 
 interface Props {
     quantity: number
@@ -18,11 +19,13 @@ export const TicketSummary = ({
                                   onQuantityChange,
                                   onBuy,
                               }: Props) => {
+    const {user} = useAuth()
+
     return (
         <>
             <div className="bg-gray-50 p-4 rounded-xl space-y-2">
-                <p><strong>Email:</strong> @mail.com</p>
-                <p><strong>Имя:</strong> ...</p>
+                <p><strong>Email: </strong>{user!.email}</p>
+                <p><strong>Имя: </strong>{user!.name}</p>
 
                 <div>
                     <label>Количество билетов</label>

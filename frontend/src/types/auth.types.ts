@@ -32,3 +32,13 @@ export interface UserProfile {
     is_admin: boolean
     created_at: string
 }
+
+export interface AuthContextValue {
+    user: UserProfile | null
+    loading: boolean
+    error: string | null
+    login: (data: LoginRequest) => Promise<void>
+    register: (data: RegisterRequest) => Promise<void>
+    logout: () => void
+    clearError: () => void
+}
