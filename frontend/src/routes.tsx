@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-//import { LoginPage } from "../pages/Auth/LoginPage"
+import { AuthPage } from "./pages/Auth/Auth"
 import { HomePage } from "./pages/home/home_page"
 // import { useAuth } from "../hooks/useAuth"
 
@@ -9,22 +9,17 @@ export const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* <Route path="/login" element={<LoginPage />} /> */}
+        <Route path="/login" element={<AuthPage />} />
 
         <Route
           path="/home"
-          element={
-             <HomePage/>
-          }
+          element={<HomePage />}
         />
 
-        {/* <Route
+        <Route
           path="*"
-          element={
-            <Navigate to="/login" replace />
-            
-          }
-        /> */}
+          element={<Navigate to="/login" replace />}
+        />
       </Routes>
     </BrowserRouter>
   )
