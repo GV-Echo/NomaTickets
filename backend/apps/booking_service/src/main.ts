@@ -1,8 +1,36 @@
 import { NestFactory } from '@nestjs/core';
-import { BookingServiceModule } from './booking_service.module';
+import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(BookingServiceModule);
-  await app.listen(process.env.port ?? 3000);
+    const app = await NestFactory.create(AppModule);
+
+    app.setGlobalPrefix('booking');
+
+    app.useGlobalPipes(
+        new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+        }),
+    );
+
+    const config = new DocumentBuilder()
+        .setTitle('Booking Service')
+        .setDescription('NomaTickets — сервис мероприятий и бронирований')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('booking/swagger_ui', app, document);
+
+    app.enableCors();
+
+    await app.listen(3002);
+    console.log('Booking service running on http://localhost:3002');
+    console.log('Swagger running on http://localhost:3002/booking/swagger_ui');
 }
+
 bootstrap();
