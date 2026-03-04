@@ -1,11 +1,10 @@
-import {createContext, useEffect, useState, type ReactNode} from "react"
+import {createContext, useEffect, useState, useRef, type ReactNode} from "react"
 import {useNavigate} from "react-router-dom"
 import axios from "axios"
 import * as authService from "../services/authService"
+import {authApi} from "../services/authService"
 import type {UserProfile, LoginRequest, RegisterRequest, AuthContextValue} from "../types/auth.types"
-import {deleteCookie, getCookie, setCookie} from "../utils/cookie.ts";
 
-const TOKEN_KEY = "access_token"
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
 
@@ -15,25 +14,74 @@ export const AuthProvider = ({children}: { children: ReactNode }) => {
     const [error, setError] = useState<string | null>(null)
     const navigate = useNavigate()
 
+    // Флаг чтобы не запускать несколько refresh одновременно
+    const isRefreshing = useRef(false)
+    const refreshSubscribers = useRef<Array<(success: boolean) => void>>([])
+
+    // Восстановление сессии при загрузке
     useEffect(() => {
-        const token = getCookie(TOKEN_KEY)
-        if (!token) {
-            setLoading(false)
-            return
-        }
-        authService.getMe(token)
+        authService.getMe()
             .then(setUser)
-            .catch(() => deleteCookie(TOKEN_KEY))
+            .catch(() => setUser(null))
             .finally(() => setLoading(false))
     }, [])
+
+    // Интерцептор: при 401 пробуем refresh, затем повторяем запрос
+    useEffect(() => {
+        const interceptor = authApi.interceptors.response.use(
+            (response) => response,
+            async (err) => {
+                const originalRequest = err.config
+
+                // Если 401 и это не сам запрос на refresh/login/logout
+                if (
+                    err.response?.status === 401 &&
+                    !originalRequest._retry &&
+                    !originalRequest.url?.includes('/refresh') &&
+                    !originalRequest.url?.includes('/login') &&
+                    !originalRequest.url?.includes('/logout')
+                ) {
+                    if (isRefreshing.current) {
+                        // Ждём пока другой поток завершит refresh
+                        return new Promise((resolve, reject) => {
+                            refreshSubscribers.current.push((success) => {
+                                if (success) resolve(authApi(originalRequest))
+                                else reject(err)
+                            })
+                        })
+                    }
+
+                    originalRequest._retry = true
+                    isRefreshing.current = true
+
+                    try {
+                        await authService.refresh()
+                        refreshSubscribers.current.forEach((cb) => cb(true))
+                        return authApi(originalRequest)
+                    } catch {
+                        refreshSubscribers.current.forEach((cb) => cb(false))
+                        setUser(null)
+                        navigate("/login")
+                        return Promise.reject(err)
+                    } finally {
+                        isRefreshing.current = false
+                        refreshSubscribers.current = []
+                    }
+                }
+
+                return Promise.reject(err)
+            }
+        )
+
+        return () => authApi.interceptors.response.eject(interceptor)
+    }, [navigate])
 
     const login = async (data: LoginRequest) => {
         setLoading(true)
         setError(null)
         try {
-            const {access_token} = await authService.login(data)
-            setCookie(TOKEN_KEY, access_token)
-            const profile = await authService.getMe(access_token)
+            await authService.login(data)
+            const profile = await authService.getMe()
             setUser(profile)
             navigate("/home")
         } catch (e) {
@@ -51,9 +99,8 @@ export const AuthProvider = ({children}: { children: ReactNode }) => {
         setLoading(true)
         setError(null)
         try {
-            const {access_token} = await authService.register(data)
-            setCookie(TOKEN_KEY, access_token)
-            const profile = await authService.getMe(access_token)
+            await authService.register(data)
+            const profile = await authService.getMe()
             setUser(profile)
             navigate("/home")
         } catch (e) {
@@ -67,10 +114,13 @@ export const AuthProvider = ({children}: { children: ReactNode }) => {
         }
     }
 
-    const logout = () => {
-        deleteCookie(TOKEN_KEY)
-        setUser(null)
-        navigate("/login")
+    const logout = async () => {
+        try {
+            await authService.logout()
+        } finally {
+            setUser(null)
+            navigate("/login")
+        }
     }
 
     const clearError = () => setError(null)
@@ -81,4 +131,3 @@ export const AuthProvider = ({children}: { children: ReactNode }) => {
         </AuthContext.Provider>
     )
 }
-

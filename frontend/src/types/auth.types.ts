@@ -21,10 +21,6 @@ export interface LoginRequest {
     password: string
 }
 
-export interface AuthTokenResponse {
-    access_token: string
-}
-
 export interface UserProfile {
     id: number
     name: string
