@@ -1,26 +1,32 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { Routes, Route, Navigate } from "react-router-dom"
 import { AuthPage } from "./pages/Auth/Auth"
-import { HomePage } from "./pages/home/home_page"
-// import { useAuth } from "../hooks/useAuth"
+import { HomePage } from "./pages/Home/HomePage.tsx"
+import { useAuth } from "./hooks/useAuth.tsx"
+
+const ProtectedRoute = ({children}: {children: React.ReactNode}) => {
+    const {user, loading} = useAuth()
+    if (loading) return null
+    return user ? <>{children}</> : <Navigate to="/login" replace />
+}
 
 export const AppRoutes = () => {
-  //const { user } = useAuth()
-
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<AuthPage />} />
+    <Routes>
+      <Route path="/login" element={<AuthPage />} />
 
-        <Route
-          path="/home"
-          element={<HomePage />}
-        />
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
 
-        <Route
-          path="*"
-          element={<Navigate to="/login" replace />}
-        />
-      </Routes>
-    </BrowserRouter>
+      <Route
+        path="*"
+        element={<Navigate to="/login" replace />}
+      />
+    </Routes>
   )
 }

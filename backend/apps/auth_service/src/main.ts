@@ -24,7 +24,7 @@ async function bootstrap() {
         .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('auth/swagger_ui', app, document);
+    SwaggerModule.setup('auth/swagger_ui', app, document, {jsonDocumentUrl: "auth/swagger_json"});
 
     app.enableCors();
 
