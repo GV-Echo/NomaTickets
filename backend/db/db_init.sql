@@ -176,3 +176,10 @@ BEFORE UPDATE ON bookings
 FOR EACH ROW
 WHEN (OLD.cancelled_at IS NULL AND NEW.cancelled_at IS NOT NULL)
 EXECUTE FUNCTION auto_set_cancelled_at();
+
+--
+-- Админ
+--
+
+INSERT INTO users (name, email, password_hash, is_admin)
+VALUES ('admin', 'admin@ad.ru', '$2b$10$C6GP1MvIoRx.ZZzz2CuHPuphlLJ2SC6.AGVR57tFIXSA9nMBRX6bS', TRUE)
