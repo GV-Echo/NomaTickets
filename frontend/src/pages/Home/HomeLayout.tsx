@@ -2,8 +2,10 @@ import {EventList} from "../../components/events/EventList"
 import {useState} from "react"
 import {BookingDrawer} from "../../components/modals/BookingDrawer"
 
+
 export const HomeLayout = () => {
     const [isDrawerOpen, setDrawerOpen] = useState(false)
+    
 
     return (
         <div className="p-8 space-y-6">

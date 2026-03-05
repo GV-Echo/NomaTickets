@@ -8,14 +8,16 @@ interface Props {
 }
 
 export const BookingDrawer = ({isOpen, onClose}: Props) => {
-    const {bookings, cancel} = useBookings()
+    const {bookings, loading, error, cancel} = useBookings()
 
     return (
         <Drawer isOpen={isOpen} onClose={onClose}>
             <div className="p-6 space-y-4">
                 <h2 className="text-xl font-semibold">Мои билеты</h2>
 
-                {bookings.length === 0 && <p>Нет бронирований</p>}
+                {loading && <p className="text-blue-500">Загрузка билетов...</p>}
+                {error && <p className="text-red-500">{error}</p>}
+                {!loading && bookings.length === 0 && <p>Нет бронирований</p>}
 
                 {bookings.map((b) => (
                     <BookingItem key={b.id} booking={b} onCancel={cancel}/>

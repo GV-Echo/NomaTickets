@@ -1,5 +1,5 @@
 interface Props {
-    dates: Date[]
+    dates: string[]
     selectedDate: string
     onChange: (date: string) => void
 }
@@ -15,8 +15,8 @@ export const DateSelect = ({dates, selectedDate, onChange}: Props) => {
             >
                 <option value="">Выберите дату</option>
                 {dates.map((date) => (
-                    <option key={date.toDateString()} value={date.toDateString()}>
-                        {date.toLocaleDateString()}
+                    <option key={date} value={date}>
+                        {new Date(date).toLocaleDateString()}
                     </option>
                 ))}
             </select>

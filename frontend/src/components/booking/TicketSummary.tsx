@@ -7,6 +7,7 @@ interface Props {
     maxAllowed: number
     totalPrice: number
     isUnavailable: boolean
+    isLoading?: boolean
     onQuantityChange: (value: number) => void
     onBuy: () => void
 }
@@ -16,6 +17,7 @@ export const TicketSummary = ({
                                   maxAllowed,
                                   totalPrice,
                                   isUnavailable,
+                                  isLoading = false,
                                   onQuantityChange,
                                   onBuy,
                               }: Props) => {
@@ -46,8 +48,8 @@ export const TicketSummary = ({
                 <p className="text-lg font-semibold">Итого: ${totalPrice}</p>
             </div>
 
-            <Button variant="success" onClick={onBuy} disabled={isUnavailable}>
-                Купить
+            <Button variant="success" onClick={onBuy} disabled={isUnavailable || isLoading}>
+                {isLoading ? "Обработка..." : "Купить"}
             </Button>
         </>
     )

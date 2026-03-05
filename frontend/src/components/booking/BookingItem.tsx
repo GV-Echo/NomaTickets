@@ -1,9 +1,5 @@
 import {Button} from "../ui/Button"
-
-interface Booking {
-    id: number
-    event: { name: string }
-}
+import type {Booking} from "../../../../shared/booking"
 
 interface Props {
     booking: Booking
@@ -11,12 +7,25 @@ interface Props {
 }
 
 export const BookingItem = ({booking, onCancel}: Props) => {
+    const isCancelled = booking.cancelled_at !== null
+    const isUsed = booking.is_used
+
     return (
         <div className="border p-3 rounded-xl flex items-center justify-between">
-            <p className="font-medium">{booking.event.name}</p>
-            <Button variant="danger" onClick={() => onCancel(booking.id)}>
-                Отменить
-            </Button>
+            <div>
+                <p className="font-medium">Билет #{booking.id}</p>
+                <p className="text-sm text-gray-500">
+                    Статус: {isCancelled ? "Отменено" : isUsed ? "Использовано" : "Активно"}
+                </p>
+                <p className="text-xs text-gray-400">
+                    Дата: {new Date(booking.created_at).toLocaleDateString()}
+                </p>
+            </div>
+            {!isCancelled && !isUsed && (
+                <Button variant="danger" onClick={() => onCancel(booking.id)}>
+                    Отменить
+                </Button>
+            )}
         </div>
     )
 }

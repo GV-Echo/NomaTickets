@@ -14,6 +14,7 @@ export const EventCard = ({event}: any) => {
                 <EventImage photo={event.photo} name={event.name}/>
 
                 <h3 className="text-xl font-semibold">{event.name}</h3>
+                <p className="text-sm text-gray-500">Описание: {event.description}</p>
                 <p className="text-sm text-gray-500">Длительность: {event.duration} мин</p>
 
                 <div className="mt-4 flex gap-2">
