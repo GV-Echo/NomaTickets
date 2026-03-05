@@ -43,6 +43,15 @@ export const EventFormModal = ({
 
     const eventId = initialData?.id
 
+    const getLocalIsoDate = (value: unknown): string => {
+        const d = new Date(value as any)
+        if (Number.isNaN(d.getTime())) return ""
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, "0")
+        const day = String(d.getDate()).padStart(2, "0")
+        return `${year}-${month}-${day}`
+    }
+
     useEffect(() => {
         if (!isOpen) return
         setName(initialData?.name ?? "")
@@ -88,8 +97,8 @@ export const EventFormModal = ({
             setTicketsError(null)
             const dto = {
                 event_id: eventId,
-                event_date: new Date(newDate),
-                event_time: newTime,
+                event_date: newDate,
+                event_time: newTime.slice(0, 5),
                 price: newPrice,
                 quantity: newQuantity,
             }
@@ -107,11 +116,12 @@ export const EventFormModal = ({
     const handleUpdateTicket = async (ticket: Ticket, index: number) => {
         try {
             setTicketsError(null)
+            const dateStr = getLocalIsoDate(ticket.event_date)
             const dto = {
-                event_date: new Date(ticket.event_date),
-                event_time: ticket.event_time,
-                price: ticket.price,
-                quantity: ticket.quantity,
+                event_date: dateStr,
+                event_time: (ticket.event_time || "").slice(0, 5),
+                price: Number(ticket.price),
+                quantity: Number(ticket.quantity),
             }
             const updated = await updateTicket(ticket.id, dto as any)
             setTickets(prev => prev.map((t, i) => (i === index ? updated : t)))
@@ -190,7 +200,7 @@ export const EventFormModal = ({
 
                         <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                             {tickets.map((t, index) => {
-                                const dateValue = new Date(t.event_date).toISOString().slice(0, 10)
+                                const dateValue = getLocalIsoDate(t.event_date)
                                 return (
                                     <div
                                         key={t.id}
@@ -205,7 +215,8 @@ export const EventFormModal = ({
                                                     const next = [...tickets]
                                                     next[index] = {
                                                         ...next[index],
-                                                        event_date: new Date(e.target.value) as any,
+                                                        // храним строку YYYY-MM-DD, чтобы избежать сдвигов по таймзоне
+                                                        event_date: e.target.value as unknown as any,
                                                     }
                                                     setTickets(next)
                                                 }}
