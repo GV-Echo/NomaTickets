@@ -215,7 +215,6 @@ export const EventFormModal = ({
                                                     const next = [...tickets]
                                                     next[index] = {
                                                         ...next[index],
-                                                        // храним строку YYYY-MM-DD, чтобы избежать сдвигов по таймзоне
                                                         event_date: e.target.value as unknown as any,
                                                     }
                                                     setTickets(next)

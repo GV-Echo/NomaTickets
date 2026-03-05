@@ -113,7 +113,7 @@ export const BookingDrawer = ({isOpen, onClose}: Props) => {
                 {metaError && <p className="text-red-500 text-sm">{metaError}</p>}
                 {!loading && bookings.length === 0 && <p>Нет бронирований</p>}
 
-                <div className="max-h-96 overflow-y-auto space-y-3">
+                <div className="max-h-220 overflow-y-auto space-y-3">
                     {Object.entries(groupedByEventName).map(([eventName, items]) => (
                         <details
                             key={eventName}

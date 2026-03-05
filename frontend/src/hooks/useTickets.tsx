@@ -16,7 +16,6 @@ export const useTickets = (eventId: number) => {
         try {
             setLoading(true)
             setError(null)
-            // Очищаем кэш перед загрузкой для свежих данных
             clearTicketCache(eventId)
             const data = await getTicketsByEvent(eventId)
             setTickets(data)

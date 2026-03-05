@@ -60,14 +60,12 @@ export async function getTicketsByEvent(eventId: number): Promise<Ticket[]> {
 
 export async function createTicket(data: CreateTicketDto): Promise<Ticket> {
     const response = await api.post<Ticket>('/tickets', data)
-    // очищаем кэш по событию
     ticketsCache.delete(data.event_id)
     return response.data
 }
 
 export async function updateTicket(id: number, data: UpdateTicketDto): Promise<Ticket> {
     const response = await api.patch<Ticket>(`/tickets/${id}`, data)
-    // невозможно точно знать event_id без доп. запроса, поэтому сбрасываем весь кэш
     ticketsCache.clear()
     return response.data
 }

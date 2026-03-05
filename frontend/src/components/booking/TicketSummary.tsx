@@ -45,7 +45,7 @@ export const TicketSummary = ({
                     <p className="text-sm text-gray-500">Максимум {maxAllowed}</p>
                 </div>
 
-                <p className="text-lg font-semibold">Итого: ${totalPrice}</p>
+                <p className="text-lg font-semibold">Итого: {totalPrice} (руб.)</p>
             </div>
 
             <Button variant="success" onClick={onBuy} disabled={isUnavailable || isLoading}>
