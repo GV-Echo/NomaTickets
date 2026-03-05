@@ -1,34 +1,36 @@
-import {useState, useEffect} from "react"
+import {useState, useEffect, useCallback} from "react"
 import type {Ticket} from "../../../shared"
-import {getTicketsByEvent, getTicketsByDate} from "../services/bookingService"
+import {getTicketsByEvent, clearTicketCache} from "../services/bookingService"
 
 export const useTickets = (eventId: number) => {
     const [tickets, setTickets] = useState<Ticket[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
+    const loadTickets = useCallback(async () => {
         if (!eventId) {
             setTickets([])
             return
         }
 
-        const loadTickets = async () => {
-            try {
-                setLoading(true)
-                setError(null)
-                const data = await getTicketsByEvent(eventId)
-                setTickets(data)
-            } catch (err) {
-                setError("Ошибка при загрузке билетов")
-                console.error(err)
-            } finally {
-                setLoading(false)
-            }
+        try {
+            setLoading(true)
+            setError(null)
+            // Очищаем кэш перед загрузкой для свежих данных
+            clearTicketCache(eventId)
+            const data = await getTicketsByEvent(eventId)
+            setTickets(data)
+        } catch (err) {
+            setError("Ошибка при загрузке билетов")
+            console.error(err)
+        } finally {
+            setLoading(false)
         }
-
-        loadTickets()
     }, [eventId])
+
+    useEffect(() => {
+        loadTickets()
+    }, [loadTickets])
 
     const getDates = (eventId: number) => {
         return [...new Set(tickets
@@ -44,5 +46,5 @@ export const useTickets = (eventId: number) => {
         )
     }
 
-    return {tickets, loading, error, getDates, getTimesByDate}
+    return {tickets, loading, error, getDates, getTimesByDate, refresh: loadTickets}
 }

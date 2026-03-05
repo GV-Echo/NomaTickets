@@ -21,7 +21,7 @@
     "start:auth": "nest start auth_service",
     "start:booking": "nest start booking_service",
     "start:auth:dev": "nest start auth_service --watch",
-    "start:booking:dev": "nest start booking_service --watch"
+    "start:booking:dev": "nest start booking_service --watch --debug"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

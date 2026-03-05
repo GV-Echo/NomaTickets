@@ -17,7 +17,7 @@ interface Props {
  
 export const BookingModal = ({ isOpen, onClose, event }: Props) => {
     const { user } = useAuth()
-    const { getDates, getTimesByDate, loading: ticketsLoading, error: ticketsError } = useTickets(event?.id || 0)
+    const { getDates, getTimesByDate, loading: ticketsLoading, error: ticketsError, refresh } = useTickets(event?.id || 0)
 
     const [selectedDate, setSelectedDate] = useState("")
     const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null)
@@ -66,6 +66,7 @@ export const BookingModal = ({ isOpen, onClose, event }: Props) => {
             }
 
             alert("Покупка успешно выполнена")
+            await refresh()
             onClose()
         } catch (err: any) {
             setError(

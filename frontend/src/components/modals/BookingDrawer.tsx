@@ -1,6 +1,7 @@
 import {Drawer} from "../ui/Drawer"
 import {useBookings} from "../../hooks/useBooking"
 import {BookingItem} from "../booking/BookingItem"
+import {useEffect} from "react"
 
 interface Props {
     isOpen: boolean
@@ -8,7 +9,13 @@ interface Props {
 }
 
 export const BookingDrawer = ({isOpen, onClose}: Props) => {
-    const {bookings, loading, error, cancel} = useBookings()
+    const {bookings, loading, error, cancel, refresh} = useBookings()
+
+    useEffect(() => {
+        if (isOpen) {
+            refresh()
+        }
+    }, [isOpen, refresh])
 
     return (
         <Drawer isOpen={isOpen} onClose={onClose}>

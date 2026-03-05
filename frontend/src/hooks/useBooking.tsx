@@ -1,67 +1,44 @@
-import {useState, useEffect} from "react"
+import {useState, useEffect, useCallback} from "react"
 import {useAuth} from "./useAuth"
-import {getMyBookings, cancelBooking, getTicketsByEvent} from "../services/bookingService"
+import {getMyBookings, cancelBooking} from "../services/bookingService"
 import type {Booking} from "../../../shared/booking"
-import type {Ticket} from "../../../shared/ticket"
-
-interface BookingWithTicket extends Booking {
-    ticket?: Ticket
-}
 
 export const useBookings = () => {
     const {user} = useAuth()
-    const [bookings, setBookings] = useState<BookingWithTicket[]>([])
+    const [bookings, setBookings] = useState<Booking[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const loadBookings = async () => {
+    const loadBookings = useCallback(async () => {
         if (!user) return
 
         try {
             setLoading(true)
             setError(null)
             const data = await getMyBookings(user.id)
-            
-            // Load ticket details for each booking
-            const bookingsWithTickets = await Promise.all(
-                data.map(async (booking) => {
-                    try {
-                        // We could cache this or get tickets differently
-                        // For now, marking for potential optimization
-                        return booking
-                    } catch {
-                        return booking
-                    }
-                })
-            )
-            
-            setBookings(bookingsWithTickets)
+            setBookings(data)
         } catch (err) {
             setError("Ошибка при загрузке билетов")
             console.error(err)
         } finally {
             setLoading(false)
         }
-    }
+    }, [user])
 
     useEffect(() => {
         loadBookings()
-    }, [user])
+    }, [loadBookings])
 
     const cancel = async (id: number) => {
         try {
             setError(null)
             await cancelBooking(id)
-            setBookings(bookings.filter(b => b.id !== id))
+            await loadBookings()
         } catch (err) {
             setError("Ошибка при отмене брони")
             console.error(err)
         }
     }
 
-    const refresh = async () => {
-        await loadBookings()
-    }
-
-    return {bookings, loading, error, cancel, refresh}
+    return {bookings, loading, error, cancel, refresh: loadBookings}
 }

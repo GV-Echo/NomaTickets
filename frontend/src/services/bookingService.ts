@@ -19,6 +19,14 @@ export async function getAllEvents(): Promise<Event[]> {
 // Tickets
 const ticketsCache = new Map<number, Ticket[]>()
 
+export function clearTicketCache(eventId?: number): void {
+    if (eventId) {
+        ticketsCache.delete(eventId)
+    } else {
+        ticketsCache.clear()
+    }
+}
+
 export async function getTicketsByEvent(eventId: number): Promise<Ticket[]> {
     if (ticketsCache.has(eventId)) {
         return ticketsCache.get(eventId)!
