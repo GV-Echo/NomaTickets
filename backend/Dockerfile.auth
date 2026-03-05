@@ -5,7 +5,7 @@ WORKDIR /app
 COPY backend/package.json backend/yarn.lock ./
 RUN yarn install --frozen-lockfile
 COPY backend .
-# Копируем общий пакет в корень контейнера (tsconfig paths ожидает ../shared)
+# tsconfig paths ожидает ../shared
 COPY shared /shared
 RUN yarn nest build auth_service
 
@@ -14,8 +14,7 @@ FROM node:22-alpine AS runner
 RUN corepack enable
 WORKDIR /app
 COPY backend/package.json ./
-# Копируем node_modules из builder (содержит все зависимости)
-COPY --from=builder /app/node_modules ./node_modules
+RUN yarn install --production
 COPY --from=builder /app/dist/apps/auth_service ./dist/apps/auth_service
 EXPOSE 3001
 CMD ["node", "dist/apps/auth_service/main"]
