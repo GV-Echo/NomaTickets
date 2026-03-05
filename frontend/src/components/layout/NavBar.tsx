@@ -1,12 +1,12 @@
-import {useNavigate} from "react-router-dom"
 import {HiOutlineLogout} from 'react-icons/hi';
 import logoUrl from "../../assets/logo.png";
+import {useAuth} from "../../hooks/useAuth.tsx";
 
 export const Navbar = () => {
-    const navigate = useNavigate()
+    const authCtx = useAuth()
 
     const handleLogout = () => {
-        navigate('/login');
+        authCtx.logout()
     };
 
     return (
