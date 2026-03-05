@@ -2,7 +2,12 @@ import axios from 'axios'
 import type { Event } from "../../../shared/event.ts"
 import type { Ticket } from "../../../shared/ticket.ts"
 import type { Booking } from "../../../shared/booking.ts"
-import type { CreateEventDto, UpdateEventDto } from "../../../shared/dto.ts"
+import type {
+    CreateEventDto,
+    UpdateEventDto,
+    CreateTicketDto,
+    UpdateTicketDto,
+} from "../../../shared/dto.ts"
 
 export const api = axios.create({
     baseURL: import.meta.env.VITE_BOOKING_API_URL as string,
@@ -51,6 +56,25 @@ export async function getTicketsByEvent(eventId: number): Promise<Ticket[]> {
     ticketsCache.set(eventId, response.data)
 
     return response.data
+}
+
+export async function createTicket(data: CreateTicketDto): Promise<Ticket> {
+    const response = await api.post<Ticket>('/tickets', data)
+    // очищаем кэш по событию
+    ticketsCache.delete(data.event_id)
+    return response.data
+}
+
+export async function updateTicket(id: number, data: UpdateTicketDto): Promise<Ticket> {
+    const response = await api.patch<Ticket>(`/tickets/${id}`, data)
+    // невозможно точно знать event_id без доп. запроса, поэтому сбрасываем весь кэш
+    ticketsCache.clear()
+    return response.data
+}
+
+export async function deleteTicket(id: number): Promise<void> {
+    await api.delete(`/tickets/${id}`)
+    ticketsCache.clear()
 }
 
 export async function getAvailableDates(eventId: number): Promise<string[]> {

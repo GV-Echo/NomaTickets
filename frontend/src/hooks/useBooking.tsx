@@ -34,6 +34,9 @@ export const useBookings = () => {
             setError(null)
             await cancelBooking(id)
             await loadBookings()
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("bookings:changed"))
+            }
         } catch (err) {
             setError("Ошибка при отмене брони")
             console.error(err)

@@ -32,10 +32,11 @@ export const EventList = () => {
         loadEvents()
     }, [])
 
-    const handleCreate = async (data: { name: string; description?: string; photo?: string; duration: number }) => {
+    const handleCreate = async (data: { name: string; description?: string; photo?: string; duration: number; isAvailable: boolean }) => {
         try {
             setError(null)
-            const created = await createEvent(data)
+            const {isAvailable, ...payload} = data
+            const created = await createEvent(payload)
             setEvents(prev => [...prev, created])
         } catch (e) {
             setError("Ошибка при создании мероприятия")
@@ -47,11 +48,17 @@ export const EventList = () => {
         setIsEditOpen(true)
     }
 
-    const handleEdit = async (data: { name: string; description?: string; photo?: string; duration: number }) => {
+    const handleEdit = async (data: { name: string; description?: string; photo?: string; duration: number; isAvailable: boolean }) => {
         if (!editingEvent) return
         try {
             setError(null)
-            const updated = await updateEvent(editingEvent.id, data)
+            const updated = await updateEvent(editingEvent.id, {
+                name: data.name,
+                description: data.description,
+                photo: data.photo,
+                duration: data.duration,
+                is_available: data.isAvailable,
+            })
             setEvents(prev => prev.map(e => e.id === updated.id ? updated : e))
         } catch (e) {
             setError("Ошибка при обновлении мероприятия")
@@ -74,6 +81,10 @@ export const EventList = () => {
 
     if (loading) return <div>Загрузка...</div>
 
+    const visibleEvents = user?.is_admin
+        ? events
+        : events.filter(e => e.is_available)
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -89,7 +100,7 @@ export const EventList = () => {
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
             <div className="grid md:grid-cols-4 gap-10">
-                {events.map((e) => (
+                {visibleEvents.map((e) => (
                     <EventCard
                         key={e.id}
                         event={e}
@@ -115,10 +126,12 @@ export const EventList = () => {
                                 setEditingEvent(null)
                             }}
                             initialData={{
+                                id: editingEvent.id,
                                 name: editingEvent.name,
                                 description: editingEvent.description ?? undefined,
                                 photo: editingEvent.photo ?? undefined,
                                 duration: editingEvent.duration,
+                                is_available: editingEvent.is_available,
                             }}
                             onSubmit={handleEdit}
                         />

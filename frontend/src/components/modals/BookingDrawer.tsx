@@ -11,7 +11,11 @@ interface Props {
     onClose: () => void
 }
 
-type GroupedBookings = Record<string, number[]>
+interface BookingWithMeta {
+    booking: import("../../../../shared/booking").Booking
+    eventName: string
+    dateTimeLabel: string | null
+}
 
 export const BookingDrawer = ({isOpen, onClose}: Props) => {
     const {bookings, loading, error, cancel, refresh} = useBookings()
@@ -55,28 +59,48 @@ export const BookingDrawer = ({isOpen, onClose}: Props) => {
         loadMeta()
     }, [isOpen, bookings])
 
-    const ticketIdToEventName = useMemo(() => {
-        const map = new Map<number, string>()
-        events.forEach(event => {
-            const tickets = ticketsByEvent[event.id] || []
-            tickets.forEach(ticket => {
-                map.set(ticket.id, event.name)
-            })
-        })
-        return map
-    }, [events, ticketsByEvent])
+    const itemsWithMeta: BookingWithMeta[] = useMemo(() => {
+        return bookings.map(b => {
+            let foundEvent: Event | undefined
+            let foundTicket: Ticket | undefined
 
-    const grouped: GroupedBookings = useMemo(() => {
-        const groups: GroupedBookings = {}
-        bookings.forEach(b => {
-            const eventName = ticketIdToEventName.get(b.ticket_id) ?? "Неизвестное мероприятие"
-            if (!groups[eventName]) {
-                groups[eventName] = []
+            for (const [eventId, tickets] of Object.entries(ticketsByEvent)) {
+                const t = tickets.find(ti => ti.id === b.ticket_id)
+                if (t) {
+                    foundTicket = t
+                    foundEvent = events.find(e => e.id === Number(eventId))
+                    break
+                }
             }
-            groups[eventName].push(b.id)
+
+            const eventName = foundEvent?.name ?? "Неизвестное мероприятие"
+
+            let dateTimeLabel: string | null = null
+            if (foundTicket) {
+                const d = new Date(foundTicket.event_date)
+                const dateStr = d.toLocaleDateString()
+                const timeStr = (foundTicket.event_time || "").slice(0, 5)
+                dateTimeLabel = `${dateStr}, ${timeStr}`
+            }
+
+            return {
+                booking: b,
+                eventName,
+                dateTimeLabel,
+            }
+        })
+    }, [bookings, events, ticketsByEvent])
+
+    const groupedByEventName = useMemo(() => {
+        const groups: Record<string, BookingWithMeta[]> = {}
+        itemsWithMeta.forEach(item => {
+            if (!groups[item.eventName]) {
+                groups[item.eventName] = []
+            }
+            groups[item.eventName].push(item)
         })
         return groups
-    }, [bookings, ticketIdToEventName])
+    }, [itemsWithMeta])
 
     return (
         <Drawer isOpen={isOpen} onClose={onClose}>
@@ -90,7 +114,7 @@ export const BookingDrawer = ({isOpen, onClose}: Props) => {
                 {!loading && bookings.length === 0 && <p>Нет бронирований</p>}
 
                 <div className="max-h-96 overflow-y-auto space-y-3">
-                    {Object.entries(grouped).map(([eventName, bookingIds]) => (
+                    {Object.entries(groupedByEventName).map(([eventName, items]) => (
                         <details
                             key={eventName}
                             className="border rounded-xl bg-white/60"
@@ -99,20 +123,18 @@ export const BookingDrawer = ({isOpen, onClose}: Props) => {
                             <summary className="flex items-center justify-between p-3 cursor-pointer select-none">
                                 <span className="font-semibold">{eventName}</span>
                                 <span className="text-xs text-gray-500">
-                                    {bookingIds.length} билетов
+                                    {items.length} билетов
                                 </span>
                             </summary>
                             <div className="border-t px-3 py-2 space-y-2">
-                                {bookingIds.map(id => {
-                                    const booking = bookings.find(b => b.id === id)!
-                                    return (
-                                        <BookingItem
-                                            key={booking.id}
-                                            booking={booking}
-                                            onCancel={cancel}
-                                        />
-                                    )
-                                })}
+                                {items.map(({booking, dateTimeLabel}) => (
+                                    <BookingItem
+                                        key={booking.id}
+                                        booking={booking}
+                                        onCancel={cancel}
+                                        eventDateTime={dateTimeLabel || undefined}
+                                    />
+                                ))}
                             </div>
                         </details>
                     ))}

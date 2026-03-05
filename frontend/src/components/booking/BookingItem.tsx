@@ -4,9 +4,10 @@ import type {Booking} from "../../../../shared/booking"
 interface Props {
     booking: Booking
     onCancel: (id: number) => void
+    eventDateTime?: string
 }
 
-export const BookingItem = ({booking, onCancel}: Props) => {
+export const BookingItem = ({booking, onCancel, eventDateTime}: Props) => {
     const isCancelled = booking.cancelled_at !== null
     const isUsed = booking.is_used
 
@@ -20,7 +21,9 @@ export const BookingItem = ({booking, onCancel}: Props) => {
     return (
         <div className="border border-gray-200 p-3 rounded-xl flex items-center justify-between bg-white/70">
             <div>
-                <p className="font-medium">Билет #{booking.id}</p>
+                <p className="font-medium">
+                    {eventDateTime ? `Билет на ${eventDateTime}` : `Билет #${booking.id}`}
+                </p>
                 <p className={`text-sm ${statusColor}`}>
                     Статус: {statusLabel}
                 </p>

@@ -1,4 +1,4 @@
-import {useMemo, useState} from "react"
+import {useEffect, useMemo, useState} from "react"
 import {Modal} from "../ui/Modal"
 import {useTickets} from "../../hooks/useTickets"
 import {useAuth} from "../../hooks/useAuth"
@@ -32,6 +32,20 @@ export const BookingModal = ({isOpen, onClose, event}: Props) => {
     const [quantity, setQuantity] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        const handler = () => {
+            refreshBookings()
+        }
+        if (typeof window !== "undefined") {
+            window.addEventListener("bookings:changed", handler)
+        }
+        return () => {
+            if (typeof window !== "undefined") {
+                window.removeEventListener("bookings:changed", handler)
+            }
+        }
+    }, [refreshBookings])
 
     const dates = getDates(event?.id || 0)
     const times = selectedDate
