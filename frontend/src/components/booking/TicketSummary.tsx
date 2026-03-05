@@ -25,7 +25,7 @@ export const TicketSummary = ({
 
     return (
         <>
-            <div className="bg-gray-50 p-4 rounded-xl space-y-2">
+            <div className="bg-gray-50 p-4 rounded-xl space-y-2 border border-gray-100">
                 <p><strong>Email: </strong>{user!.email}</p>
                 <p><strong>Имя: </strong>{user!.name}</p>
 

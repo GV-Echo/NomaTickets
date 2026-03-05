@@ -1,5 +1,5 @@
 import {useState, useEffect, useCallback} from "react"
-import type {Ticket} from "../../../shared"
+import type {Ticket} from "../../../shared/ticket"
 import {getTicketsByEvent, clearTicketCache} from "../services/bookingService"
 
 export const useTickets = (eventId: number) => {

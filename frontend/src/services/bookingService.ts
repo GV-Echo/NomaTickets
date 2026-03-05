@@ -2,6 +2,7 @@ import axios from 'axios'
 import type { Event } from "../../../shared/event.ts"
 import type { Ticket } from "../../../shared/ticket.ts"
 import type { Booking } from "../../../shared/booking.ts"
+import type { CreateEventDto, UpdateEventDto } from "../../../shared/dto.ts"
 
 export const api = axios.create({
     baseURL: import.meta.env.VITE_BOOKING_API_URL as string,
@@ -14,6 +15,20 @@ export const api = axios.create({
 export async function getAllEvents(): Promise<Event[]> {
     const response = await api.get<Event[]>('/events')
     return response.data
+}
+
+export async function createEvent(data: CreateEventDto): Promise<Event> {
+    const response = await api.post<Event>('/events', data)
+    return response.data
+}
+
+export async function updateEvent(id: number, data: UpdateEventDto): Promise<Event> {
+    const response = await api.patch<Event>(`/events/${id}`, data)
+    return response.data
+}
+
+export async function deleteEvent(id: number): Promise<void> {
+    await api.delete(`/events/${id}`)
 }
 
 // Tickets
