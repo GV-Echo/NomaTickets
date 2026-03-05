@@ -22,7 +22,7 @@ export const EventCard = ({event, onEdit, onDelete}: Props) => {
                 className="p-6 rounded-2xl shadow hover:shadow-lg hover:-translate-y-1 transition bg-white/60 border border-gray-100 flex flex-col justify-between min-w-50"
             >
                 <div className="space-y-3">
-                    <EventImage photo={event.photo} name={event.name}/>
+                    <EventImage photo={event.photo ?? undefined} name={event.name}/>
 
                     <h3 className="text-xl font-semibold">{event.name}</h3>
                     {event.description && (
