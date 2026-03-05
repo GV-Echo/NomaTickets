@@ -30,7 +30,6 @@ export class BookingsService {
         try {
             await client.query('BEGIN');
 
-            // 1️⃣ Получаем билет
             const ticketResult = await client.query(
                 `SELECT * FROM tickets WHERE id = $1 FOR UPDATE`,
                 [dto.ticket_id],
@@ -46,15 +45,6 @@ export class BookingsService {
                 throw new BadRequestException('No tickets available');
             }
 
-            // 2️⃣ Уменьшаем количество
-            await client.query(
-                `UPDATE tickets
-                 SET quantity = quantity - 1
-                 WHERE id = $1`,
-                [dto.ticket_id],
-            );
-
-            // 3️⃣ Создаём бронь
             const bookingResult = await client.query(
                 `INSERT INTO bookings (ticket_id, user_id, is_used, cancelled_at, created_at)
                  VALUES ($1, $2, false, NULL, NOW())
@@ -93,14 +83,6 @@ export class BookingsService {
             if (booking.cancelled_at) {
                 throw new BadRequestException('Booking already cancelled');
             }
-
-            // Возвращаем билет
-            await client.query(
-                `UPDATE tickets
-                 SET quantity = quantity + 1
-                 WHERE id = $1`,
-                [booking.ticket_id],
-            );
 
             const updatedBooking = await client.query(
                 `UPDATE bookings

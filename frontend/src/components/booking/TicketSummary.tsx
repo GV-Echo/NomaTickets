@@ -7,6 +7,7 @@ interface Props {
     maxAllowed: number
     totalPrice: number
     isUnavailable: boolean
+    isLoading?: boolean
     onQuantityChange: (value: number) => void
     onBuy: () => void
 }
@@ -16,6 +17,7 @@ export const TicketSummary = ({
                                   maxAllowed,
                                   totalPrice,
                                   isUnavailable,
+                                  isLoading = false,
                                   onQuantityChange,
                                   onBuy,
                               }: Props) => {
@@ -23,7 +25,7 @@ export const TicketSummary = ({
 
     return (
         <>
-            <div className="bg-gray-50 p-4 rounded-xl space-y-2">
+            <div className="bg-gray-50 p-4 rounded-xl space-y-2 border border-gray-100">
                 <p><strong>Email: </strong>{user!.email}</p>
                 <p><strong>Имя: </strong>{user!.name}</p>
 
@@ -43,11 +45,11 @@ export const TicketSummary = ({
                     <p className="text-sm text-gray-500">Максимум {maxAllowed}</p>
                 </div>
 
-                <p className="text-lg font-semibold">Итого: ${totalPrice}</p>
+                <p className="text-lg font-semibold">Итого: {totalPrice} (руб.)</p>
             </div>
 
-            <Button variant="success" onClick={onBuy} disabled={isUnavailable}>
-                Купить
+            <Button variant="success" onClick={onBuy} disabled={isUnavailable || isLoading}>
+                {isLoading ? "Обработка..." : "Купить"}
             </Button>
         </>
     )

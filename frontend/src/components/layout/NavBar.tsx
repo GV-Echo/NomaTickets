@@ -21,9 +21,6 @@ export const Navbar = () => {
             </div>
 
             <div className="flex items-center gap-4">
-                {/* {userName && (
-          <span className="text-gray-800 text-sm font-medium">{userName}</span>
-        )} */}
                 <button
                     onClick={handleLogout}
                     className="p-2 rounded-full hover:bg-rose-100 text-rose-500 transition-colors duration-200"

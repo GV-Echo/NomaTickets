@@ -3,6 +3,7 @@ import {
     Get,
     Post,
     Patch,
+    Delete,
     Param,
     Body,
     ParseIntPipe,
@@ -62,5 +63,14 @@ export class TicketsController {
         @Body() dto: UpdateTicketDto,
     ): Promise<Ticket> {
         return this.ticketsService.update(id, dto);
+    }
+
+    @Delete(':id')
+    @ApiOperation({ summary: 'Delete ticket' })
+    @ApiResponse({ status: 200, description: 'Ticket deleted' })
+    delete(
+        @Param('id', ParseIntPipe) id: number,
+    ): Promise<{ message: string }> {
+        return this.ticketsService.delete(id);
     }
 }

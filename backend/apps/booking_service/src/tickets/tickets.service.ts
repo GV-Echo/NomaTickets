@@ -94,4 +94,17 @@ export class TicketsService {
 
         return result.rows[0];
     }
+
+    async delete(id: number): Promise<{ message: string }> {
+        const result = await this.pool.query(
+            `DELETE FROM tickets WHERE id = $1`,
+            [id],
+        );
+
+        if (result.rowCount === 0) {
+            throw new NotFoundException('Ticket not found');
+        }
+
+        return { message: 'Ticket deleted successfully' };
+    }
 }
