@@ -1,10 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
+    app.use(cookieParser());
 
     app.setGlobalPrefix('booking');
 
@@ -26,7 +29,10 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('booking/swagger_ui', app, document);
 
-    app.enableCors();
+    app.enableCors({
+        origin: process.env.FRONTEND_URL,
+        credentials: true,
+    });
 
     await app.listen(3002);
     console.log('Booking service running on http://localhost:3002');

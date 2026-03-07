@@ -7,16 +7,19 @@ import {
     Param,
     Body,
     ParseIntPipe,
+    UseGuards,
 } from '@nestjs/common';
 import {
     ApiTags,
     ApiOperation,
     ApiResponse,
+    ApiBearerAuth,
 } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { Event } from '@shared/event';
+import { JwtAuthGuard, AdminGuard } from '../jwt/jwt_handler';
 
 @ApiTags('events')
 @Controller('events')
@@ -39,15 +42,23 @@ export class EventsController {
     }
 
     @Post()
+    @UseGuards(JwtAuthGuard, AdminGuard)
+    @ApiBearerAuth()
     @ApiOperation({ summary: 'Create new event' })
     @ApiResponse({ status: 201, description: 'Event created' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden: admin access required' })
     create(@Body() dto: CreateEventDto): Promise<Event> {
         return this.eventsService.create(dto);
     }
 
     @Patch(':id')
+    @UseGuards(JwtAuthGuard, AdminGuard)
+    @ApiBearerAuth()
     @ApiOperation({ summary: 'Update event' })
     @ApiResponse({ status: 200, description: 'Event updated' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden: admin access required' })
     update(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateEventDto,
@@ -56,8 +67,12 @@ export class EventsController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, AdminGuard)
+    @ApiBearerAuth()
     @ApiOperation({ summary: 'Soft delete event' })
     @ApiResponse({ status: 200, description: 'Event deleted' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden: admin access required' })
     async delete(
         @Param('id', ParseIntPipe) id: number,
     ): Promise<{ message: string }> {
