@@ -1,30 +1,20 @@
-import {createContext, useEffect, useState, useRef, type ReactNode} from "react"
+import {createContext, useEffect, useRef, type ReactNode} from "react"
+import {observer} from 'mobx-react-lite'
 import {useNavigate} from "react-router-dom"
-import axios from "axios"
 import * as authService from "../services/authService"
 import {authApi} from "../services/authService"
-import type {UserProfile, LoginRequest, RegisterRequest, AuthContextValue} from "../types/auth.types"
+import type {LoginRequest, RegisterRequest, AuthContextValue} from "../types/auth.types"
+import {userStore} from "../stores/userStore"
 
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
 
-export const AuthProvider = ({children}: { children: ReactNode }) => {
-    const [user, setUser] = useState<UserProfile | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+export const AuthProvider = observer(({children}: { children: ReactNode }) => {
     const navigate = useNavigate()
 
     // Флаг чтобы не запускать несколько refresh одновременно
     const isRefreshing = useRef(false)
     const refreshSubscribers = useRef<Array<(success: boolean) => void>>([])
-
-    // Восстановление сессии при загрузке
-    useEffect(() => {
-        authService.getMe()
-            .then(setUser)
-            .catch(() => setUser(null))
-            .finally(() => setLoading(false))
-    }, [])
 
     // Интерцептор: при 401 пробуем refresh, затем повторяем запрос
     useEffect(() => {
@@ -60,7 +50,7 @@ export const AuthProvider = ({children}: { children: ReactNode }) => {
                         return authApi(originalRequest)
                     } catch {
                         refreshSubscribers.current.forEach((cb) => cb(false))
-                        setUser(null)
+                        userStore.user = null
                         navigate("/login")
                         return Promise.reject(err)
                     } finally {
@@ -76,58 +66,25 @@ export const AuthProvider = ({children}: { children: ReactNode }) => {
         return () => authApi.interceptors.response.eject(interceptor)
     }, [navigate])
 
-    const login = async (data: LoginRequest) => {
-        setLoading(true)
-        setError(null)
-        try {
-            await authService.login(data)
-            const profile = await authService.getMe()
-            setUser(profile)
-            navigate("/home")
-        } catch (e) {
-            if (axios.isAxiosError(e) && e.response?.status === 401) {
-                setError("Неверный email или пароль")
-            } else {
-                setError("Ошибка при входе. Попробуйте позже")
-            }
-        } finally {
-            setLoading(false)
-        }
+    const value: AuthContextValue = {
+        user: userStore.user,
+        loading: userStore.loading,
+        error: userStore.error,
+        login: async (data: LoginRequest) => {
+            await userStore.login(data)
+            navigate('/home')
+        },
+        register: async (data: RegisterRequest) => {
+            await userStore.register(data)
+            navigate('/home')
+        },
+        logout: () => userStore.logout(),
+        clearError: () => userStore.clearError(),
     }
-
-    const register = async (data: RegisterRequest) => {
-        setLoading(true)
-        setError(null)
-        try {
-            await authService.register(data)
-            const profile = await authService.getMe()
-            setUser(profile)
-            navigate("/home")
-        } catch (e) {
-            if (axios.isAxiosError(e) && e.response?.status === 409) {
-                setError("Пользователь с таким email уже существует")
-            } else {
-                setError("Ошибка при регистрации. Попробуйте позже")
-            }
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const logout = async () => {
-        try {
-            await authService.logout()
-        } finally {
-            setUser(null)
-            navigate("/login")
-        }
-    }
-
-    const clearError = () => setError(null)
 
     return (
-        <AuthContext.Provider value={{user, loading, error, login, register, logout, clearError}}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     )
-}
+})

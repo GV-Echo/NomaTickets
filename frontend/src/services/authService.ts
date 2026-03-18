@@ -23,9 +23,23 @@ export async function logout(): Promise<void> {
     await authApi.post('/logout')
 }
 
+// Кэширование данных о пользователе
+let _cachedMe: { data: UserProfile; ts: number } | null = null
+const ME_TTL = 60000 // 1 минута
+
+export function invalidateGetMeCache() {
+    _cachedMe = null
+}
+
 export async function getMe(): Promise<UserProfile> {
+    const now = Date.now()
+    if (_cachedMe && now - _cachedMe.ts < ME_TTL) {
+        return _cachedMe.data
+    }
     const response = await authApi.get<UserProfile>('/me')
+    _cachedMe = {data: response.data, ts: now}
     return response.data
 }
+
 
 export {authApi}
