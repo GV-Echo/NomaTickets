@@ -1,5 +1,6 @@
 import {Button} from "../ui/Button"
 import type {Booking} from "../../../../shared/booking"
+import {useState} from "react";
 
 interface Props {
     booking: Booking
@@ -8,7 +9,7 @@ interface Props {
 }
 
 export const BookingItem = ({booking, onCancel, eventDateTime}: Props) => {
-    const isCancelled = booking.cancelled_at !== null
+    const [isCancelled, setIsCancelled] = useState(booking.cancelled_at !== null)
     const isUsed = booking.is_used
 
     const statusLabel = isCancelled ? "Отменено" : isUsed ? "Использовано" : "Активно"
@@ -18,6 +19,10 @@ export const BookingItem = ({booking, onCancel, eventDateTime}: Props) => {
             ? "text-gray-500"
             : "text-emerald-600"
 
+    const handleCancel = () => {
+        onCancel(booking.id)
+        setIsCancelled(true)
+    }
     return (
         <div className="border border-gray-200 p-3 rounded-xl flex items-center justify-between bg-white/70">
             <div>
@@ -32,7 +37,7 @@ export const BookingItem = ({booking, onCancel, eventDateTime}: Props) => {
                 </p>
             </div>
             {!isCancelled && !isUsed && (
-                <Button variant="danger" onClick={() => onCancel(booking.id)}>
+                <Button variant="danger" onClick={handleCancel}>
                     Отменить
                 </Button>
             )}

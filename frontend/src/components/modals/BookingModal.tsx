@@ -5,9 +5,10 @@ import {useAuth} from "../../hooks/useAuth"
 import {DateSelect} from "../booking/DateSelect"
 import {TimeSelect} from "../booking/TimeSelect"
 import {TicketSummary} from "../booking/TicketSummary"
-import type {Event} from "../../../../shared/event.ts"
-import {createBooking} from "../../services/bookingService.ts"
-import {useBookings} from "../../hooks/useBooking.tsx"
+import type {Event} from "../../../../shared/event"
+import {useBookings} from "../../hooks/useBookings"
+import {bookingStore} from "../../stores/bookingStore"
+import {ticketStore} from "../../stores/ticketStore"
 
 interface Props {
     isOpen: boolean
@@ -23,7 +24,6 @@ export const BookingModal = ({isOpen, onClose, event}: Props) => {
         getTimesByDate,
         loading: ticketsLoading,
         error: ticketsError,
-        refresh,
     } = useTickets(event?.id || 0)
     const {bookings, refresh: refreshBookings} = useBookings()
 
@@ -100,13 +100,14 @@ export const BookingModal = ({isOpen, onClose, event}: Props) => {
         try {
             setIsLoading(true)
             setError(null)
-
+            ticketStore.decrementTicketQtyLocal(selectedTicket.id, quantity)
             for (let i = 0; i < quantity; i++) {
-                await createBooking(selectedTicket.id, user.id)
+                await bookingStore.create(selectedTicket.id, user.id)
+
             }
 
             alert("Покупка успешно выполнена")
-            await Promise.all([refresh(), refreshBookings()])
+            await Promise.all([ticketStore.fetchTickets(event.id, true), refreshBookings()])
             onClose()
         } catch (err: any) {
             setError(

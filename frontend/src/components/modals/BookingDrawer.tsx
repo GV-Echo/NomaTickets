@@ -1,8 +1,9 @@
 import {useEffect, useMemo, useState} from "react"
 import {Drawer} from "../ui/Drawer"
-import {useBookings} from "../../hooks/useBooking"
+import {useBookings} from "../../hooks/useBookings"
 import {BookingItem} from "../booking/BookingItem"
-import {getAllEvents, getTicketsByEvent} from "../../services/bookingService"
+import {eventStore} from "../../stores/eventStore"
+import {ticketStore} from "../../stores/ticketStore"
 import type {Event} from "../../../../shared/event"
 import type {Ticket} from "../../../../shared/ticket"
 
@@ -28,7 +29,7 @@ export const BookingDrawer = ({isOpen, onClose}: Props) => {
         if (isOpen) {
             refresh()
         }
-    }, [isOpen, refresh])
+    }, [isOpen])
 
     useEffect(() => {
         if (!isOpen || bookings.length === 0) return
@@ -38,10 +39,10 @@ export const BookingDrawer = ({isOpen, onClose}: Props) => {
                 setMetaLoading(true)
                 setMetaError(null)
 
-                const loadedEvents = await getAllEvents()
+                const loadedEvents = await eventStore.fetchEvents()
                 setEvents(loadedEvents)
 
-                const ticketsPromises = loadedEvents.map(e => getTicketsByEvent(e.id))
+                const ticketsPromises = loadedEvents.map(e => ticketStore.fetchTickets(e.id))
                 const allTickets = await Promise.all(ticketsPromises)
 
                 const byEvent: Record<number, Ticket[]> = {}
@@ -104,7 +105,7 @@ export const BookingDrawer = ({isOpen, onClose}: Props) => {
 
     return (
         <Drawer isOpen={isOpen} onClose={onClose}>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 flex flex-col h-full min-h-0">
                 <h2 className="text-xl font-semibold">Мои билеты</h2>
 
                 {loading && <p className="text-blue-500">Загрузка билетов...</p>}
@@ -113,7 +114,7 @@ export const BookingDrawer = ({isOpen, onClose}: Props) => {
                 {metaError && <p className="text-red-500 text-sm">{metaError}</p>}
                 {!loading && bookings.length === 0 && <p>Нет бронирований</p>}
 
-                <div className="max-h-220 overflow-y-auto space-y-3">
+                <div className="overflow-y-auto flex-1 space-y-3 min-h-0">
                     {Object.entries(groupedByEventName).map(([eventName, items]) => (
                         <details
                             key={eventName}

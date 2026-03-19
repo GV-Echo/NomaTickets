@@ -38,42 +38,24 @@ export async function deleteEvent(id: number): Promise<void> {
 }
 
 // Tickets
-const ticketsCache = new Map<number, Ticket[]>()
-
-export function clearTicketCache(eventId?: number): void {
-    if (eventId) {
-        ticketsCache.delete(eventId)
-    } else {
-        ticketsCache.clear()
-    }
-}
 
 export async function getTicketsByEvent(eventId: number): Promise<Ticket[]> {
-    if (ticketsCache.has(eventId)) {
-        return ticketsCache.get(eventId)!
-    }
-
     const response = await api.get<Ticket[]>(`/tickets/event/${eventId}`)
-    ticketsCache.set(eventId, response.data)
-
     return response.data
 }
 
 export async function createTicket(data: CreateTicketDto): Promise<Ticket> {
     const response = await api.post<Ticket>('/tickets', data)
-    ticketsCache.delete(data.event_id)
     return response.data
 }
 
 export async function updateTicket(id: number, data: UpdateTicketDto): Promise<Ticket> {
     const response = await api.patch<Ticket>(`/tickets/${id}`, data)
-    ticketsCache.clear()
     return response.data
 }
 
 export async function deleteTicket(id: number): Promise<void> {
     await api.delete(`/tickets/${id}`)
-    ticketsCache.clear()
 }
 
 export async function getAvailableDates(eventId: number): Promise<string[]> {

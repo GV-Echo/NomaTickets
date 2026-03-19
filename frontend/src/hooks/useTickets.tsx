@@ -1,49 +1,32 @@
-import {useState, useEffect, useCallback} from "react"
-import type {Ticket} from "../../../shared/ticket"
-import {getTicketsByEvent, clearTicketCache} from "../services/bookingService"
+import {useEffect} from "react"
+import {ticketStore} from "../stores/ticketStore"
 
 export const useTickets = (eventId: number) => {
-    const [tickets, setTickets] = useState<Ticket[]>([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    const loadTickets = useCallback(async () => {
-        if (!eventId) {
-            setTickets([])
-            return
-        }
-
-        try {
-            setLoading(true)
-            setError(null)
-            clearTicketCache(eventId)
-            const data = await getTicketsByEvent(eventId)
-            setTickets(data)
-        } catch (err) {
-            setError("Ошибка при загрузке билетов")
-            console.error(err)
-        } finally {
-            setLoading(false)
-        }
+    useEffect(() => {
+        ticketStore.fetchTickets(eventId).catch(() => {
+        })
     }, [eventId])
 
-    useEffect(() => {
-        loadTickets()
-    }, [loadTickets])
+    const tickets = eventId ? ticketStore.ticketsByEvent.get(eventId) || [] : []
+    const loading = ticketStore.loading
+    const error = ticketStore.error
 
-    const getDates = (eventId: number) => {
-        return [...new Set(tickets
-            .filter(t => t.event_id === eventId)
-            .map(t => new Date(t.event_date).toDateString())
-        )]
+    const getDates = (evId: number) => {
+        const list = ticketStore.ticketsByEvent.get(evId) || []
+        return [...new Set(list.map(t => new Date(t.event_date).toDateString()))]
     }
 
-    const getTimesByDate = (eventId: number, date: string) => {
-        return tickets.filter(t => 
-            t.event_id === eventId && 
-            new Date(t.event_date).toDateString() === new Date(date).toDateString()
-        )
+    const getTimesByDate = (evId: number, date: string) => {
+        const list = ticketStore.ticketsByEvent.get(evId) || []
+        return list.filter(t => new Date(t.event_date).toDateString() === new Date(date).toDateString())
     }
 
-    return {tickets, loading, error, getDates, getTimesByDate, refresh: loadTickets}
+    return {
+        tickets,
+        loading,
+        error,
+        getDates,
+        getTimesByDate,
+        refresh: (force = false) => ticketStore.fetchTickets(eventId, force)
+    }
 }

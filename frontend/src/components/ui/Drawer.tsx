@@ -12,12 +12,12 @@ export const Drawer = ({isOpen, onClose, children}: Props) => {
             {isOpen && (
                 <div
                     onClick={onClose}
-                    className="fixed inset-0 bg-black/30"
+                    className="fixed h-full inset-0 bg-black/30 z-40"
                 />
             )}
 
             <div
-                className={`fixed top-0 right-0 h-full w-96 bg-white shadow-2xl transform transition-transform ${
+                className={`fixed top-0 right-0 h-full w-96 bg-white shadow-2xl transform transition-transform flex flex-col z-50 ${
                     isOpen ? "translate-x-0" : "translate-x-full"
                 }`}
             >
