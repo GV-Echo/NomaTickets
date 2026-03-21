@@ -1,45 +1,29 @@
-import {useEffect, useState} from 'react'
-import type {Event} from "../../../../shared/event.ts"
-import {EventCard} from "./EventCard.tsx"
-import {useAuth} from "../../hooks/useAuth.tsx"
-import {Button} from "../ui/Button.tsx"
-import {EventFormModal} from "../modals/EventFormModal.tsx"
-import {createEvent, deleteEvent, getAllEvents, updateEvent} from '../../services/bookingService.ts'
+import { useState } from 'react'
+import type { Event } from "../../../../shared/event.ts"
+import { EventCard } from "./EventCard.tsx"
+import { useAuth } from "../../hooks/useAuth.tsx"
+import { Button } from "../ui/Button.tsx"
+import { EventFormModal } from "../modals/EventFormModal.tsx"
+import { useGetEventsQuery, useCreateEventMutation, useUpdateEventMutation, useDeleteEventMutation } from '../../api/bookingApi'
 
 export const EventList = () => {
-    const {user} = useAuth()
-    const [events, setEvents] = useState<Event[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const { user } = useAuth()
+    const { data: events = [], isLoading, error } = useGetEventsQuery()
+    const [createEvent] = useCreateEventMutation()
+    const [updateEvent] = useUpdateEventMutation()
+    const [deleteEvent] = useDeleteEventMutation()
 
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [editingEvent, setEditingEvent] = useState<Event | null>(null)
     const [isEditOpen, setIsEditOpen] = useState(false)
 
-    useEffect(() => {
-        async function loadEvents() {
-            try {
-                setError(null)
-                const data = await getAllEvents()
-                setEvents(data)
-            } catch (e) {
-                setError("Не удалось загрузить мероприятия")
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        loadEvents()
-    }, [])
-
     const handleCreate = async (data: { name: string; description?: string; photo?: string; duration: number; isAvailable: boolean }) => {
         try {
-            setError(null)
             const {isAvailable, ...payload} = data
-            const created = await createEvent(payload)
-            setEvents(prev => [...prev, created])
+            await createEvent(payload).unwrap()
         } catch (e) {
-            setError("Ошибка при создании мероприятия")
+            // show error by your app's global error handling or keep simple
+            console.error('Ошибка при создании мероприятия', e)
         }
     }
 
@@ -51,17 +35,15 @@ export const EventList = () => {
     const handleEdit = async (data: { name: string; description?: string; photo?: string; duration: number; isAvailable: boolean }) => {
         if (!editingEvent) return
         try {
-            setError(null)
-            const updated = await updateEvent(editingEvent.id, {
+            await updateEvent({ id: editingEvent.id, body: {
                 name: data.name,
                 description: data.description,
                 photo: data.photo,
                 duration: data.duration,
                 is_available: data.isAvailable,
-            })
-            setEvents(prev => prev.map(e => e.id === updated.id ? updated : e))
+            }}).unwrap()
         } catch (e) {
-            setError("Ошибка при обновлении мероприятия")
+            console.error('Ошибка при обновлении мероприятия', e)
         } finally {
             setIsEditOpen(false)
             setEditingEvent(null)
@@ -71,15 +53,13 @@ export const EventList = () => {
     const handleDelete = async (event: Event) => {
         if (!window.confirm(`Удалить мероприятие "${event.name}"?`)) return
         try {
-            setError(null)
-            await deleteEvent(event.id)
-            setEvents(prev => prev.filter(e => e.id !== event.id))
+            await deleteEvent(event.id).unwrap()
         } catch (e) {
-            setError("Ошибка при удалении мероприятия")
+            console.error('Ошибка при удалении мероприятия', e)
         }
     }
 
-    if (loading) return <div>Загрузка...</div>
+    if (isLoading) return <div>Загрузка...</div>
 
     const visibleEvents = user?.is_admin
         ? events
@@ -97,7 +77,7 @@ export const EventList = () => {
                 )}
             </div>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p className="text-red-500 text-sm">Ошибка загрузки мероприятий</p>}
 
             <div className="grid md:grid-cols-4 gap-10">
                 {visibleEvents.map((e) => (

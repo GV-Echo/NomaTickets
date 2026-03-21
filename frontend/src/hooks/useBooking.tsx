@@ -1,47 +1,35 @@
-import {useState, useEffect, useCallback} from "react"
-import {useAuth} from "./useAuth"
-import {getMyBookings, cancelBooking} from "../services/bookingService"
-import type {Booking} from "../../../shared/booking"
+import { useEffect } from 'react'
+import { useAuth } from './useAuth'
+import { useGetMyBookingsQuery, useCancelBookingMutation } from '../api/bookingApi'
+import type { Booking } from '../../../shared/booking'
 
 export const useBookings = () => {
-    const {user} = useAuth()
-    const [bookings, setBookings] = useState<Booking[]>([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    const loadBookings = useCallback(async () => {
-        if (!user) return
-
-        try {
-            setLoading(true)
-            setError(null)
-            const data = await getMyBookings(user.id)
-            setBookings(data)
-        } catch (err) {
-            setError("Ошибка при загрузке билетов")
-            console.error(err)
-        } finally {
-            setLoading(false)
-        }
-    }, [user])
+    const { user } = useAuth()
+    const { data: bookings = [], isLoading, error, refetch } = useGetMyBookingsQuery(user?.id ?? 0, { skip: !user })
+    const [cancelBooking] = useCancelBookingMutation()
 
     useEffect(() => {
-        loadBookings()
-    }, [loadBookings])
+        const handler = () => refetch()
+        if (typeof window !== 'undefined') {
+            window.addEventListener('bookings:changed', handler)
+        }
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('bookings:changed', handler)
+            }
+        }
+    }, [refetch])
 
     const cancel = async (id: number) => {
         try {
-            setError(null)
-            await cancelBooking(id)
-            await loadBookings()
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(new Event("bookings:changed"))
-            }
+            await cancelBooking(id).unwrap()
+            refetch()
+            if (typeof window !== 'undefined') window.dispatchEvent(new Event('bookings:changed'))
         } catch (err) {
-            setError("Ошибка при отмене брони")
-            console.error(err)
+            console.error('Ошибка при отмене брони', err)
+            throw err
         }
     }
 
-    return {bookings, loading, error, cancel, refresh: loadBookings}
+    return { bookings: bookings as Booking[], loading: isLoading, error: error ? String(error) : null, cancel, refresh: refetch }
 }

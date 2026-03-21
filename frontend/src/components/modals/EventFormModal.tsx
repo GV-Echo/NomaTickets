@@ -2,8 +2,8 @@ import {useEffect, useState} from "react"
 import {Modal} from "../ui/Modal"
 import {Input} from "../ui/Input"
 import {Button} from "../ui/Button"
-import {createTicket, deleteTicket, getTicketsByEvent, updateTicket} from "../../services/bookingService"
-import type {Ticket} from "../../../../shared/ticket"
+import { useGetTicketsByEventQuery, useCreateTicketMutation, useUpdateTicketMutation, useDeleteTicketMutation } from '../../api/bookingApi'
+import type {Ticket} from "../../../../shared/ticket.ts"
 
 interface EventFormData {
     name: string
@@ -32,9 +32,10 @@ export const EventFormModal = ({
     const [duration, setDuration] = useState(initialData?.duration ?? 60)
     const [isAvailable, setIsAvailable] = useState<boolean>(initialData?.is_available ?? true)
 
-    const [tickets, setTickets] = useState<Ticket[]>([])
-    const [ticketsLoading, setTicketsLoading] = useState(false)
-    const [ticketsError, setTicketsError] = useState<string | null>(null)
+    const { data: tickets = [], isLoading: ticketsLoading, error: ticketsError, refetch: refetchTickets } = useGetTicketsByEventQuery(eventId, { skip: !eventId })
+    const [createTicketMutation] = useCreateTicketMutation()
+    const [updateTicketMutation] = useUpdateTicketMutation()
+    const [deleteTicketMutation] = useDeleteTicketMutation()
 
     const [newDate, setNewDate] = useState("")
     const [newTime, setNewTime] = useState("")
@@ -64,20 +65,7 @@ export const EventFormModal = ({
     useEffect(() => {
         if (!isOpen || !eventId) return
 
-        const loadTickets = async () => {
-            try {
-                setTicketsLoading(true)
-                setTicketsError(null)
-                const data = await getTicketsByEvent(eventId)
-                setTickets(data)
-            } catch (e) {
-                setTicketsError("Не удалось загрузить билеты для мероприятия")
-            } finally {
-                setTicketsLoading(false)
-            }
-        }
-
-        loadTickets()
+        // data is loaded via RTK Query hook; nothing to do here
     }, [isOpen, eventId])
 
     const handleSubmit = () => {
@@ -94,7 +82,6 @@ export const EventFormModal = ({
     const handleCreateTicket = async () => {
         if (!eventId || !newDate || !newTime || newQuantity <= 0 || newPrice <= 0) return
         try {
-            setTicketsError(null)
             const dto = {
                 event_id: eventId,
                 event_date: newDate,
@@ -102,20 +89,19 @@ export const EventFormModal = ({
                 price: newPrice,
                 quantity: newQuantity,
             }
-            const created = await createTicket(dto as any)
-            setTickets(prev => [...prev, created])
+            await createTicketMutation(dto as any).unwrap()
             setNewDate("")
             setNewTime("")
             setNewPrice(0)
             setNewQuantity(0)
+            refetchTickets()
         } catch (e) {
-            setTicketsError("Ошибка при создании билетов")
+            console.error(e)
         }
     }
 
     const handleUpdateTicket = async (ticket: Ticket, index: number) => {
         try {
-            setTicketsError(null)
             const dateStr = getLocalIsoDate(ticket.event_date)
             const dto = {
                 event_date: dateStr,
@@ -123,21 +109,20 @@ export const EventFormModal = ({
                 price: Number(ticket.price),
                 quantity: Number(ticket.quantity),
             }
-            const updated = await updateTicket(ticket.id, dto as any)
-            setTickets(prev => prev.map((t, i) => (i === index ? updated : t)))
+            await updateTicketMutation({ id: ticket.id, body: dto as any }).unwrap()
+            refetchTickets()
         } catch (e) {
-            setTicketsError("Ошибка при обновлении билета")
+            console.error(e)
         }
     }
 
     const handleDeleteTicket = async (ticketId: number) => {
         if (!window.confirm("Удалить этот билет?")) return
         try {
-            setTicketsError(null)
-            await deleteTicket(ticketId)
-            setTickets(prev => prev.filter(t => t.id !== ticketId))
+            await deleteTicketMutation({ id: ticketId }).unwrap()
+            refetchTickets()
         } catch (e) {
-            setTicketsError("Ошибка при удалении билета")
+            console.error(e)
         }
     }
 

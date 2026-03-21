@@ -6,7 +6,7 @@ import {DateSelect} from "../booking/DateSelect"
 import {TimeSelect} from "../booking/TimeSelect"
 import {TicketSummary} from "../booking/TicketSummary"
 import type {Event} from "../../../../shared/event.ts"
-import {createBooking} from "../../services/bookingService.ts"
+import { useCreateBookingMutation } from '../../api/bookingApi'
 import {useBookings} from "../../hooks/useBooking.tsx"
 
 interface Props {
@@ -47,7 +47,7 @@ export const BookingModal = ({isOpen, onClose, event}: Props) => {
         }
     }, [refreshBookings])
 
-    const dates = getDates(event?.id || 0)
+    const dates = getDates
     const times = selectedDate
         ? getTimesByDate(event.id, selectedDate)
         : []
@@ -94,25 +94,23 @@ export const BookingModal = ({isOpen, onClose, event}: Props) => {
         setError(null)
     }
 
+    const [createBooking] = useCreateBookingMutation()
+
     const handleBuy = async () => {
         if (!selectedTicket || !user || limitReached) return
 
         try {
             setIsLoading(true)
-            setError(null)
-
             for (let i = 0; i < quantity; i++) {
-                await createBooking(selectedTicket.id, user.id)
+                await createBooking({ ticket_id: selectedTicket.id, user_id: user.id }).unwrap()
             }
 
-            alert("Покупка успешно выполнена")
+            alert('Покупка успешно выполнена')
             await Promise.all([refresh(), refreshBookings()])
             onClose()
         } catch (err: any) {
-            setError(
-                err?.response?.data?.message ||
-                "Ошибка при покупке билета"
-            )
+            console.error(err)
+            setError('Ошибка при покупке билета')
         } finally {
             setIsLoading(false)
         }
