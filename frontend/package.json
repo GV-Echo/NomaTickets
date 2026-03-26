@@ -1,0 +1,21 @@
+{
+  "name": "nomatickets-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shared-webpack-config",
+    "host",
+    "mfe-events",
+    "mfe-admin"
+  ],
+  "scripts": {
+    "start": "concurrently \"yarn workspace @nomatickets/mfe-events start\" \"yarn workspace @nomatickets/mfe-admin start\" \"yarn workspace @nomatickets/host start\"",
+    "build": "yarn workspace @nomatickets/mfe-events build && yarn workspace @nomatickets/mfe-admin build && yarn workspace @nomatickets/host build",
+    "start:host": "yarn workspace @nomatickets/host start",
+    "start:events": "yarn workspace @nomatickets/mfe-events start",
+    "start:admin": "yarn workspace @nomatickets/mfe-admin start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
