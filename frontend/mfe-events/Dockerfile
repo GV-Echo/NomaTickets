@@ -1,28 +1,41 @@
 FROM node:18-alpine AS builder
+
 WORKDIR /app
+
+RUN apk add --no-cache git python3 make g++
+
 COPY package.json yarn.lock ./
-COPY host/package.json ./host/package.json
-COPY mfe-admin/package.json ./mfe-admin/package.json
-COPY mfe-events/package.json ./mfe-events/package.json
-COPY shared-webpack-config/package.json ./shared-webpack-config/package.json
-RUN corepack enable && corepack prepare yarn@1.22.19 --activate
-RUN apk add --no-cache python3 make g++ git
-RUN yarn install --frozen-lockfile --network-concurrency 1
-
+COPY shared-webpack-config ./shared-webpack-config
 COPY mfe-events ./mfe-events
+COPY mfe-admin ./mfe-admin
+COPY host ./host
 
-ARG NODE_ENV=production
-ARG HOST_URL
-ENV NODE_ENV=${NODE_ENV}
-ENV HOST_URL=${HOST_URL}
+ENV NODE_ENV=production
+
+RUN yarn install --frozen-lockfile --production=false
 
 RUN yarn workspace @nomatickets/mfe-events build
 
 FROM nginx:1.27-alpine
-COPY --from=builder /app/mfe-events/dist /usr/share/nginx/html
+
+COPY --from=builder /app/mfe-events/dist /usr/share/nginx/html/mfe-events
+
+RUN rm /etc/nginx/conf.d/default.conf
+RUN printf '%s\n' "server {" \
+	"    listen 80;" \
+	"    server_name _;" \
+	"    location /mfe-events/ {" \
+	"        root /usr/share/nginx/html;" \
+	"        index index.html;" \
+	"        try_files \$uri \$uri/ /mfe-events/index.html;" \
+	"    }" \
+	"    location / {" \
+	"        return 404;" \
+	"    }" \
+	"}" > /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
-
-
 
 

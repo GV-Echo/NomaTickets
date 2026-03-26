@@ -27,10 +27,18 @@ module.exports = (env, argv) => {
         plugins: [
             createHostFederationPlugin({
                 name: 'host',
-                remotes: {
-                    eventsApp: `eventsApp@${process.env.EVENTS_URL || 'http://localhost:3011'}/remoteEntry.js`,
-                    adminApp: `adminApp@${process.env.ADMIN_URL || 'http://localhost:3012'}/remoteEntry.js`,
-                },
+                remotes: (() => {
+                    const isDev = argv.mode !== 'production';
+                    const devEvents = process.env.EVENTS_URL || 'http://localhost:3011';
+                    const devAdmin = process.env.ADMIN_URL || 'http://localhost:3012';
+                    const prodEvents = process.env.EVENTS_URL || '/mfe-events';
+                    const prodAdmin = process.env.ADMIN_URL || '/mfe-admin';
+
+                    return {
+                        eventsApp: `eventsApp@${isDev ? devEvents : prodEvents}/remoteEntry.js`,
+                        adminApp: `adminApp@${isDev ? devAdmin : prodAdmin}/remoteEntry.js`,
+                    };
+                })(),
                 // AuthContext доступен в MFE как import('host/AuthContext')
                 exposes: {
                     './AuthContext': './src/providers/AuthProvider',
