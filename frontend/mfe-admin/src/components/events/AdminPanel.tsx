@@ -18,7 +18,7 @@ export const AdminPanel = observer(() => {
     const inactive = total - active
 
     return (
-        <div className="space-y-6">
+        <div>
             {/* Заголовок */}
             <div className="flex items-center justify-between">
                 <div>
