@@ -21,7 +21,7 @@ export const EventList = observer(() => {
         : eventStore.events.filter(e => e.is_available)
 
     return (
-        <div className="space-y-6">
+        <div>
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Мероприятия</h2>
